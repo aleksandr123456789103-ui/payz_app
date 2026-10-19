@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>PAY Z</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --brand:#5b3df5; --brand-2:#7c5cff; --brand-dark:#3a22c9;
+  --bg:#f4f5fb; --card:#ffffff; --text:#14152b; --muted:#6b6f86; --line:#e6e8f2;
+  --radius:18px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.4}
+button,input,select{font:inherit;color:inherit}
+.wrap{max-width:520px;margin:0 auto}
+
+/* header */
+header{position:sticky;top:0;z-index:20;background:rgba(244,245,251,.92);backdrop-filter:blur(10px);padding:12px 16px 10px}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:19px;letter-spacing:.3px}
+.logo i{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--brand),var(--brand-2));display:grid;place-items:center;color:#fff;font-style:normal;font-size:16px}
+.burger{background:none;border:0;width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:20px}
+.search{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px}
+.search input{border:0;outline:0;flex:1;background:none}
+
+/* hero */
+.hero{background:linear-gradient(160deg,var(--brand) 0%,var(--brand-dark) 100%);color:#fff;padding:22px 16px 18px}
+.hero h1{font-size:24px;line-height:1.2;font-weight:800;margin-bottom:6px}
+.hero p{opacity:.85;font-size:13px;margin-bottom:16px}
+.quick{background:var(--card);color:var(--text);border-radius:var(--radius);padding:14px;box-shadow:0 10px 30px rgba(20,10,80,.25)}
+.qtabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.qtab{border:2px solid transparent;background:none;border-radius:14px;padding:4px 0 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:var(--muted)}
+.qtab.active{border-color:var(--brand);color:var(--brand);font-weight:600}
+
+/* tiles */
+.ico{border-radius:14px;display:grid;place-items:center;color:#fff;font-weight:800}
+.qtab .ico{width:54px;height:54px;font-size:18px}
+
+/* form */
+.field{background:#f2f3f8;border-radius:12px;padding:8px 12px;margin-bottom:8px;position:relative}
+.field label{display:block;font-size:11px;color:var(--muted)}
+.field input,.field select{width:100%;border:0;outline:0;background:none;font-size:15px;padding:2px 0;appearance:none}
+.field.sel::after{content:"▾";position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.row{display:grid;grid-template-columns:1fr 110px;gap:8px}
+.btn{width:100%;border:0;border-radius:14px;background:var(--brand);color:#fff;font-weight:700;padding:14px;cursor:pointer;font-size:15px}
+.btn:active{transform:scale(.99)}
+.btn[disabled]{opacity:.5}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--muted);margin-top:10px}
+.check input{accent-color:var(--brand);margin-top:2px}
+.note{font-size:11px;color:var(--muted);margin-top:8px}
+.err{color:#d93a3a;font-size:12px;margin:-4px 0 8px 4px;display:none}
+
+/* banners */
+.banners{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:16px;scrollbar-width:none}
+.banners::-webkit-scrollbar{display:none}
+.banner{flex:0 0 86%;scroll-snap-align:start;border-radius:var(--radius);padding:18px;color:#fff;min-height:140px;display:flex;flex-direction:column;justify-content:space-between}
+.banner h3{font-size:18px;margin-bottom:4px}
+.banner p{font-size:13px;opacity:.9}
+.banner button{align-self:flex-start;margin-top:12px;background:#fff;color:var(--text);border:0;border-radius:10px;padding:8px 14px;font-weight:600;cursor:pointer}
+
+/* catalog */
+section{padding:8px 16px 20px}
+h2{font-size:20px;text-align:center;margin:8px 0 14px}
+.chips{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:9px 14px;cursor:pointer;font-weight:600;font-size:14px}
+.chip.active{background:var(--brand);border-color:var(--brand);color:#fff}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{background:none;border:0;cursor:pointer;text-align:center}
+.card .ico{width:100%;aspect-ratio:1;font-size:30px;margin-bottom:6px;box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.card span{font-weight:700;font-size:14px}
+.card small{display:block;color:var(--muted);font-size:12px}
+.more{margin-top:14px}
+.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:20px 0}
+
+/* steps / why */
+.steps,.why{display:flex;flex-direction:column;gap:10px}
+.step{background:var(--card);border-radius:var(--radius);padding:18px}
+.step b{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;background:var(--brand);color:#fff;margin-bottom:10px}
+.step h4{font-size:16px;margin-bottom:4px}
+.step p{color:var(--muted);font-size:14px}
+.step a{color:var(--brand);text-decoration:none}
+.whyc{background:var(--card);border-radius:var(--radius);padding:16px;display:flex;gap:14px;align-items:center}
+.whyc .em{font-size:30px;width:56px;height:56px;border-radius:14px;background:#efeafe;display:grid;place-items:center;flex:none}
+.whyc h4{font-size:15px}
+.whyc p{color:var(--muted);font-size:13px}
+
+/* footer */
+footer{padding:20px 16px 90px;color:var(--muted);font-size:14px}
+footer h5{font-size:13px;font-weight:600;margin:16px 0 8px;color:#9a9db2}
+footer a{display:block;color:var(--text);text-decoration:none;padding:5px 0;cursor:pointer}
+
+/* floating */
+.fab{position:fixed;right:16px;bottom:18px;width:52px;height:52px;border-radius:50%;background:var(--brand);color:#fff;border:0;font-size:22px;font-weight:700;box-shadow:0 8px 20px rgba(91,61,245,.4);cursor:pointer;z-index:30}
+
+/* sheet */
+.overlay{position:fixed;inset:0;background:rgba(10,10,30,.45);z-index:40;display:none}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--card);border-radius:22px 22px 0 0;padding:16px 16px 24px;max-height:88vh;overflow:auto;transform:translateY(100%);transition:transform .25s ease;max-width:520px;margin:0 auto}
+.sheet.open{transform:none}
+.sheet .grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 14px}
+.sheet-h{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.sheet-h .ico{width:52px;height:52px;font-size:20px}
+.sheet-h h3{font-size:18px}
+.sheet-h p{color:var(--muted);font-size:13px}
+.menu a{display:block;padding:12px 4px;border-bottom:1px solid var(--line);color:var(--text);text-decoration:none;cursor:pointer}
+.done{text-align:center;padding:10px 0}
+.done .em{font-size:48px;margin-bottom:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="top">
+    <div class="logo"><i>Z</i>PAY Z</div>
+    <button class="burger" onclick="openMenu()" aria-label="Меню">☰</button>
+  </div>
+  <label class="search">🔍<input id="q" placeholder="Поиск товаров" oninput="renderGrid()"></label>
+</header>
+
+<div class="hero">
+  <h1>Оплата игр и зарубежных<br>сервисов в рублях</h1>
+  <p>Оформите заявку — оператор подтвердит стоимость и пришлёт реквизиты</p>
+  <div class="quick">
+    <div class="qtabs" id="qtabs"></div>
+    <div id="qform"></div>
+  </div>
+</div>
+
+<div class="banners">
+  <div class="banner" style="background:linear-gradient(135deg,#0f9b8e,#1fc8a8)">
+    <div><h3>Подписки без ограничений</h3><p>Пополнение App Store, музыка, облако и приложения</p></div>
+    <button onclick="openProduct('appleid')">Пополнить</button>
+  </div>
+  <div class="banner" style="background:linear-gradient(135deg,#e2552b,#ff8a3d)">
+    <div><h3>ИИ-сервисы</h3><p>ChatGPT, Claude, Perplexity и другие — оформим подписку</p></div>
+    <button onclick="setCat('ai');document.getElementById('catalog').scrollIntoView({behavior:'smooth'})">Выбрать</button>
+  </div>
+  <div class="banner" style="background:linear-gradient(135deg,#1d2a6b,#4153c4)">
+    <div><h3>Игры и донат</h3><p>Steam, PlayStation, PUBG Mobile и предзаказы новинок</p></div>
+    <button onclick="setCat('games');document.getElementById('catalog').scrollIntoView({behavior:'smooth'})">Смотреть</button>
+  </div>
+</div>
+
+<section id="catalog">
+  <h2>Сервисы под любую задачу</h2>
+  <div class="chips" id="chips"></div>
+  <div class="grid" id="grid"></div>
+  <button class="btn more" onclick="openCustom()">Нет нужного сервиса? Оформим вручную</button>
+</section>
+
+<section>
+  <h2>Как происходит оплата</h2>
+  <div class="steps">
+    <div class="step"><b>1</b><h4>Выберите продукт</h4><p>Подписки, игры и пополнения в каталоге. Если сервиса нет — <a onclick="openCustom()">оформим вручную</a>.</p></div>
+    <div class="step"><b>2</b><h4>Оформите заявку</h4><p>Укажите логин или e-mail. Оператор подтвердит итоговую стоимость и пришлёт реквизиты в чат.</p></div>
+    <div class="step"><b>3</b><h4>Пользуйтесь сервисом</h4><p>После оплаты активируем подписку или пришлём код на почту либо в чат.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>Почему выбирают нас</h2>
+  <div class="why">
+    <div class="whyc"><div class="em">⚡</div><div><h4>Быстро активируем</h4><p>Доступ приходит вскоре после оплаты</p></div></div>
+    <div class="whyc"><div class="em">💬</div><div><h4>Живые операторы</h4><p>Каждую заявку ведёт человек, а не скрипт</p></div></div>
+    <div class="whyc"><div class="em">🛡</div><div><h4>Прозрачно</h4><p>Стоимость подтверждаем до оплаты — никаких скрытых комиссий</p></div></div>
+  </div>
+</section>
+
+<footer>
+  <h5>Поддержка</h5>
+  <a onclick="support()">✈️ Написать в Telegram</a>
+  <h5>Компания</h5>
+  <a onclick="doc('Договор оферты')">Договор оферты</a>
+  <a onclick="doc('Политика конфиденциальности')">Политика конфиденциальности</a>
+  <a onclick="doc('Условия оплаты')">Условия оплаты</a>
+  <p style="margin-top:18px">© 2026 PAY Z</p>
+</footer>
+
+</div>
+
+<button class="fab" onclick="support()" aria-label="Поддержка">?</button>
+<div class="overlay" id="overlay" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet"><div class="grab"></div><div id="sheetBody"></div></div>
+
+<script>
+/* ==================== НАСТРОЙКИ ==================== */
+const BOT_USERNAME = 'payz_pay_bot';
+const TOPUP_FEE = 0.054;            // комиссия на пополнение по сумме (5,4%)
+// Цены ниже — ОРИЕНТИРОВОЧНЫЕ, замените на свои. Итог всё равно подтверждает оператор.
+const CATS = [
+  {id:'all',   name:'Все товары'},
+  {id:'ai',    name:'🤖 ИИ-сервисы'},
+  {id:'games', name:'🎮 Игры'},
+  {id:'subs',  name:'🎧 Подписки'},
+];
+const PRODUCTS = [
+  {id:'steam', name:'Steam', cat:'games', bg:'#1b2838', ic:'S', mode:'amount',
+   currencies:['RUB','USD','KZT'], login:'Логин Steam', loginHint:'Логин, а не ник в профиле'},
+  {id:'psn', name:'PlayStation', cat:'games', bg:'#0b3fa8', ic:'PS', mode:'nominal',
+   nominals:{'$10':1150,'$20':2250,'$50':5500,'$100':10900}, regions:['США','Турция','Польша'], login:'E-mail для получения кода', type:'email'},
+  {id:'chatgpt', name:'ChatGPT', cat:'ai', bg:'#101010', ic:'AI', mode:'nominal',
+   nominals:{'Plus — 1 месяц':2500,'Pro — 1 месяц':22900}, regions:['США'], login:'E-mail аккаунта', type:'email', promo:true},
+  {id:'appleid', name:'Apple ID', cat:'subs', bg:'#1d8cf8', ic:'A', mode:'nominal',
+   nominals:{'$10':1150,'$25':2850,'$50':5600,'$100':11100}, regions:['США','Турция'], login:'E-mail для получения кода', type:'email'},
+  {id:'appleid_ru', name:'Apple ID RU', cat:'subs', bg:'#3a7bd5', ic:'A₽', mode:'amount',
+   currencies:['RUB'], login:'Apple ID (e-mail)', type:'email'},
+  {id:'pubg', name:'PUBG Mobile', cat:'games', bg:'#c58b2a', ic:'UC', mode:'nominal',
+   nominals:{'60 UC':120,'325 UC':550,'660 UC':1090,'1800 UC':2790}, login:'Player ID'},
+  {id:'gta6', name:'GTA VI · предзаказ', cat:'games', bg:'#b0307a', ic:'VI', mode:'nominal',
+   nominals:{'Standard':7500,'Deluxe':9900}, regions:['США','Турция'], login:'E-mail аккаунта', type:'email'},
+  {id:'fc', name:'EA SPORTS FC', cat:'games', bg:'#0f6b3b', ic:'FC', mode:'nominal',
+   nominals:{'Standard':6500,'Ultimate':9500,'FC Points 2800':2600}, login:'E-mail аккаунта EA', type:'email'},
+  {id:'tgprem', name:'Telegram Premium', cat:'subs', bg:'#2aa3e0', ic:'✈', mode:'nominal',
+   nominals:{'3 месяца':1290,'6 месяцев':1890,'12 месяцев':3290}, login:'@username получателя'},
+  {id:'claude', name:'Claude', cat:'ai', bg:'#d4744f', ic:'✳', mode:'nominal',
+   nominals:{'Pro — 1 месяц':2500,'Max — 1 месяц':12500}, login:'E-mail аккаунта', type:'email', promo:true},
+  {id:'higgsfield', name:'Higgsfield AI', cat:'ai', bg:'#b6e01c', ic:'H', mode:'nominal',
+   nominals:{'Basic — 1 месяц':1100,'Pro — 1 месяц':3300}, login:'E-mail аккаунта', type:'email'},
+  {id:'perplexity', name:'Perplexity', cat:'ai', bg:'#1e2a2b', ic:'P', mode:'nominal',
+   nominals:{'Pro — 1 месяц':2300,'Pro — 12 месяцев':21000}, login:'E-mail аккаунта', type:'email'},
+  {id:'spotify', name:'Spotify', cat:'subs', bg:'#1db954', ic:'♫', mode:'nominal',
+   nominals:{'Premium — 1 месяц':690,'Premium — 12 месяцев':6900}, login:'E-mail аккаунта', type:'email'},
+  {id:'youtube', name:'YouTube Premium', cat:'subs', bg:'#e62117', ic:'▶', mode:'nominal',
+   nominals:{'1 месяц':690,'12 месяцев':6500}, login:'E-mail аккаунта Google', type:'email'},
+];
+const QUICK = ['steam','psn','chatgpt','appleid'];
+const RATES = {RUB:1, USD:98, KZT:0.2};   // для пересчёта суммы пополнения в рубли
+/* =================================================== */
+
+const tg = window.Telegram?.WebApp;
+if (tg){ tg.ready(); tg.expand(); }
+const $ = id => document.getElementById(id);
+const byId = id => PRODUCTS.find(p=>p.id===id);
+let cat = 'all', quickId = 'steam';
+
+function tile(p, cls=''){ return `<div class="ico ${cls}" style="background:${p.bg}">${p.ic}</div>`; }
+const fmt = n => Math.round(n).toLocaleString('ru-RU') + ' ₽';
+
+function formHTML(p, prefix){
+  let h = '';
+  if (p.mode==='amount'){
+    h += `<div class="row">
+      <div class="field"><label>Сумма пополнения</label><input id="${prefix}amount" type="number" inputmode="decimal" value="500" min="1"></div>
+      <div class="field sel"><label>Валюта</label><select id="${prefix}cur">${p.currencies.map(c=>`<option>${c}</option>`).join('')}</select></div>
+    </div>`;
+  } else {
+    h += `<div class="field sel"><label>Номинал</label><select id="${prefix}nom">${Object.keys(p.nominals).map(n=>`<option>${n}</option>`).join('')}</select></div>`;
+    if (p.regions) h += `<div class="field sel"><label>Регион аккаунта</label><select id="${prefix}reg">${p.regions.map(r=>`<option>${r}</option>`).join('')}</select></div>`;
+  }
+  h += `<div class="field"><label>${p.login}${p.loginHint?' · '+p.loginHint:''}</label><input id="${prefix}login" type="${p.type||'text'}" autocomplete="off"></div>
+        <div class="err" id="${prefix}err">Заполните это поле</div>`;
+  if (p.promo) h += `<div class="field"><label>Промокод</label><input id="${prefix}promo" autocomplete="off"></div>`;
+  h += `<button class="btn" id="${prefix}btn" onclick="submitOrder('${p.id}','${prefix}')"></button>
+        <label class="check"><input type="checkbox" id="${prefix}news" checked>Хочу получать скидки и промокоды</label>
+        <p class="note">Нажимая кнопку, вы соглашаетесь с <a onclick="doc('Политика конфиденциальности')" style="color:inherit;text-decoration:underline">политикой конфиденциальности</a>. Итоговую стоимость подтверждает оператор.</p>`;
+  return h;
+}
+
+function calc(p, prefix){
+  if (p.mode==='amount'){
+    const a = parseFloat($(prefix+'amount').value)||0, cur = $(prefix+'cur').value;
+    return a * RATES[cur] * (1+TOPUP_FEE);
+  }
+  return p.nominals[$(prefix+'nom').value];
+}
+function bindPrice(p, prefix){
+  const upd = () => {
+    const price = calc(p, prefix);
+    const verb = p.mode==='amount' ? `Пополнить ${p.name}` : `Купить ${p.name}`;
+    $(prefix+'btn').textContent = price>0 ? `${verb} за ~${fmt(price)}` : verb;
+  };
+  ['amount','cur','nom','reg'].forEach(k=>{ const el=$(prefix+k); if(el) el.addEventListener('input',upd); });
+  upd();
+}
+
+function renderQuick(){
+  $('qtabs').innerHTML = QUICK.map(id=>{ const p=byId(id);
+    return `<button class="qtab ${id===quickId?'active':''}" onclick="quickId='${id}';renderQuick()">${tile(p)}${p.name}</button>`;}).join('');
+  const p = byId(quickId);
+  $('qform').innerHTML = formHTML(p,'q_');
+  bindPrice(p,'q_');
+}
+
+function setCat(c){ cat=c; renderChips(); renderGrid(); }
+function renderChips(){
+  $('chips').innerHTML = CATS.map(c=>`<button class="chip ${c.id===cat?'active':''}" onclick="setCat('${c.id}')">${c.name}</button>`).join('');
+}
+function renderGrid(){
+  const q = $('q').value.trim().toLowerCase();
+  const list = PRODUCTS.filter(p => (cat==='all'||p.cat===cat) && (!q || p.name.toLowerCase().includes(q)));
+  if (q && cat!=='all' && !list.length){ cat='all'; renderChips(); return renderGrid(); }
+  $('grid').innerHTML = list.length ? list.map(p=>{
+      const from = p.mode==='nominal' ? 'от '+fmt(Math.min(...Object.values(p.nominals))) : 'любая сумма';
+      return `<button class="card" onclick="openProduct('${p.id}')">${tile(p)}<span>${p.name}</span><small>${from}</small></button>`;
+    }).join('') : `<div class="empty">Ничего не нашли — <a style="color:var(--brand)" onclick="openCustom()">оформим вручную</a></div>`;
+  if (q) document.getElementById('catalog').scrollIntoView({behavior:'smooth'});
+}
+
+/* ---------- sheet ---------- */
+function openSheet(html){
+  $('sheetBody').innerHTML = html;
+  $('overlay').style.display='block';
+  requestAnimationFrame(()=>$('sheet').classList.add('open'));
+  if (tg?.BackButton){ tg.BackButton.show(); tg.BackButton.onClick(closeSheet); }
+}
+function closeSheet(){
+  $('sheet').classList.remove('open');
+  setTimeout(()=>$('overlay').style.display='none',200);
+  if (tg?.BackButton){ tg.BackButton.hide(); tg.BackButton.offClick(closeSheet); }
+}
+function openProduct(id){
+  const p = byId(id);
+  openSheet(`<div class="sheet-h">${tile(p)}<div><h3>${p.name}</h3><p>${CATS.find(c=>c.id===p.cat).name}</p></div></div>${formHTML(p,'s_')}`);
+  bindPrice(p,'s_');
+}
+function openCustom(){
+  openSheet(`<div class="sheet-h"><div class="ico" style="background:var(--brand)">+</div><div><h3>Другой сервис</h3><p>Оформим вручную</p></div></div>
+    <div class="field"><label>Название сервиса и тариф</label><input id="c_name" placeholder="Например: Netflix Standard, 1 месяц"></div>
+    <div class="field"><label>Ссылка на сервис (если есть)</label><input id="c_link"></div>
+    <div class="field"><label>Логин / e-mail</label><input id="c_login"></div>
+    <div class="err" id="c_err">Укажите сервис</div>
+    <button class="btn" onclick="submitCustom()">Отправить заявку</button>`);
+}
+function openMenu(){
+  openSheet(`<div class="menu">
+    <a onclick="closeSheet();setCat('all');$('catalog').scrollIntoView({behavior:'smooth'})">🛍 Каталог</a>
+    <a onclick="openCustom()">➕ Оформить другой сервис</a>
+    <a onclick="support()">💬 Поддержка</a>
+    <a onclick="doc('Условия оплаты')">📄 Условия оплаты</a></div>`);
+}
+function doc(name){
+  openSheet(`<h3 style="margin-bottom:8px">${name}</h3><p style="color:var(--muted)">Документ готовится. По вопросам — напишите в поддержку.</p>`);
+}
+function support(){
+  const url = `https://t.me/${BOT_USERNAME}?start=support`;
+  if (tg?.openTelegramLink) { tg.openTelegramLink(url); tg.close(); } else window.open(url,'_blank');
+}
+
+/* ---------- отправка заявки ---------- */
+function send(order){
+  const data = JSON.stringify(order);
+  if (tg && tg.initData !== undefined && tg.sendData){
+    try { tg.sendData(data); return; } catch(e){ /* открыт не из reply-кнопки */ }
+  }
+  openSheet(`<div class="done"><div class="em">📝</div><h3>Заявка сформирована</h3>
+    <p style="color:var(--muted);margin:8px 0 14px">Откройте каталог кнопкой «🛍 Каталог PAY Z» внизу чата с ботом, чтобы заявка отправилась автоматически.</p>
+    <button class="btn" onclick="support()">Перейти в бот</button></div>`);
+}
+function submitOrder(id, prefix){
+  const p = byId(id), login = $(prefix+'login');
+  if (!login.value.trim()){ $(prefix+'err').style.display='block'; login.focus(); return; }
+  $(prefix+'err').style.display='none';
+  const order = {t:'order', id:p.id, name:p.name, login:login.value.trim(),
+                 price:Math.round(calc(p,prefix)), news:$(prefix+'news').checked};
+  if (p.mode==='amount'){ order.amount=$(prefix+'amount').value; order.cur=$(prefix+'cur').value; }
+  else { order.nominal=$(prefix+'nom').value; if (p.regions) order.region=$(prefix+'reg').value; }
+  if ($(prefix+'promo')) order.promo=$(prefix+'promo').value.trim();
+  if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+  send(order);
+}
+function submitCustom(){
+  const n=$('c_name').value.trim();
+  if(!n){ $('c_err').style.display='block'; return; }
+  send({t:'custom', name:n, link:$('c_link').value.trim(), login:$('c_login').value.trim()});
+}
+
+/* стартовый раздел из ссылки: ...index.html#chatgpt */
+renderQuick(); renderChips(); renderGrid();
+const start = (tg?.initDataUnsafe?.start_param) || location.hash.slice(1);
+if (start && byId(start)) openProduct(start);
+else if (['ai','games','subs'].includes(start)) { setCat(start); $('catalog').scrollIntoView(); }
+</script>
+</body>
+</html>
