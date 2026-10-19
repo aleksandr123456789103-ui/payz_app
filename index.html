@@ -107,6 +107,24 @@ footer a{display:block;color:var(--text);text-decoration:none;padding:5px 0;curs
 .sheet-h p{color:var(--muted);font-size:13px}
 .menu a{display:block;padding:12px 4px;border-bottom:1px solid var(--line);color:var(--text);text-decoration:none;cursor:pointer}
 .done{text-align:center;padding:10px 0}
+/* loader */
+.loader{position:fixed;inset:0;z-index:60;display:none;place-items:center;background:linear-gradient(160deg,var(--brand) 0%,var(--brand-dark) 100%);color:#fff;padding:24px}
+.loader.on{display:grid}
+.ld-box{width:100%;max-width:340px;text-align:center}
+.ld-logo{display:flex;justify-content:center;margin-bottom:22px}
+.ld-logo i{width:56px;height:56px;border-radius:16px;background:#fff;color:var(--brand);display:grid;place-items:center;font-style:normal;font-weight:800;font-size:28px}
+.ld-spin{width:44px;height:44px;margin:0 auto 18px;border-radius:50%;border:4px solid rgba(255,255,255,.25);border-top-color:#fff;animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ld-box h3{font-size:20px;margin-bottom:4px}
+.ld-box p{opacity:.8;font-size:13px;margin-bottom:22px}
+.ld-box ul{list-style:none;background:rgba(255,255,255,.12);border-radius:16px;padding:12px 16px;text-align:left}
+.ld-box li{display:flex;align-items:center;gap:10px;padding:7px 0;opacity:.5;font-size:14px}
+.ld-box li i{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.6);flex:none;display:grid;place-items:center;font-style:normal;font-size:11px}
+.ld-box li.act{opacity:1}
+.ld-box li.act i{border-color:#fff;border-top-color:transparent;animation:spin .8s linear infinite}
+.ld-box li.ok{opacity:1}
+.ld-box li.ok i{background:#fff;border-color:#fff;color:var(--brand)}
+.ld-box li.ok i::before{content:"✓"}
 .done .em{font-size:48px;margin-bottom:8px}
 </style>
 </head>
@@ -123,7 +141,7 @@ footer a{display:block;color:var(--text);text-decoration:none;padding:5px 0;curs
 
 <div class="hero">
   <h1>Оплата игр и зарубежных<br>сервисов в рублях</h1>
-  <p>Оформите заявку — оператор подтвердит стоимость и пришлёт реквизиты</p>
+  <p>Выберите сервис — счёт и статус заказа придут в чат с ботом</p>
   <div class="quick">
     <div class="qtabs" id="qtabs"></div>
     <div id="qform"></div>
@@ -173,7 +191,7 @@ footer a{display:block;color:var(--text);text-decoration:none;padding:5px 0;curs
   <h2>Почему выбирают нас</h2>
   <div class="why">
     <div class="whyc"><div class="em">⚡</div><div><h4>Быстро активируем</h4><p>Доступ приходит вскоре после оплаты</p></div></div>
-    <div class="whyc"><div class="em">💬</div><div><h4>Живые операторы</h4><p>Каждую заявку ведёт человек, а не скрипт</p></div></div>
+    <div class="whyc"><div class="em">🤖</div><div><h4>Автоматически 24/7</h4><p>Заявки обрабатываются без ожидания ответа менеджера</p></div></div>
     <div class="whyc"><div class="em">🛡</div><div><h4>Прозрачно</h4><p>Стоимость подтверждаем до оплаты — никаких скрытых комиссий</p></div></div>
   </div>
 </section>
@@ -192,6 +210,15 @@ footer a{display:block;color:var(--text);text-decoration:none;padding:5px 0;curs
 
 <button class="fab" onclick="support()" aria-label="Поддержка">?</button>
 <div class="overlay" id="overlay" onclick="closeSheet()"></div>
+<div class="loader" id="loader">
+  <div class="ld-box">
+    <div class="ld-logo"><i>Z</i></div>
+    <div class="ld-spin"></div>
+    <h3 id="ldTitle">Оформляем заявку…</h3>
+    <p id="ldSub">Не закрывайте окно</p>
+    <ul id="ldSteps"></ul>
+  </div>
+</div>
 <div class="sheet" id="sheet"><div class="grab"></div><div id="sheetBody"></div></div>
 
 <script>
@@ -236,7 +263,7 @@ function formHTML(p, prefix){
   h += `<button class="btn" id="${prefix}btn" onclick="submitOrder('${p.id}','${prefix}')"></button>`;
   if (!ASK_LOGIN) h += `<p class="note">${p.login} бот спросит в чате следующим шагом.</p>`;
   h += `<label class="check"><input type="checkbox" id="${prefix}news" checked>Хочу получать скидки и промокоды</label>
-        <p class="note">Нажимая кнопку, вы соглашаетесь с <a onclick="doc('Политика конфиденциальности')" style="color:inherit;text-decoration:underline">политикой конфиденциальности</a>. Итоговую стоимость подтверждает оператор.</p>`;
+        <p class="note">Нажимая кнопку, вы соглашаетесь с <a onclick="doc('Политика конфиденциальности')" style="color:inherit;text-decoration:underline">политикой конфиденциальности</a>. Сумма к оплате придёт в чат с ботом.</p>`;
   return h;
 }
 
@@ -346,7 +373,7 @@ function submitOrder(id, prefix){
       const r = p.regions ? p.regions.indexOf($(prefix+'reg').value) : 0;
       code = `o-${p.id}-${n}-${r}`;
     }
-    return toBot(code);
+    return withLoader(() => toBot(code));
   }
 
   const order = {t:'order', id:p.id, name:p.name, login:$(prefix+'login').value.trim(),
@@ -354,17 +381,36 @@ function submitOrder(id, prefix){
   if (p.mode==='amount'){ order.amount=$(prefix+'amount').value; order.cur=$(prefix+'cur').value; }
   else { order.nominal=$(prefix+'nom').value; if (p.regions) order.region=$(prefix+'reg').value; }
   if ($(prefix+'promo')) order.promo=$(prefix+'promo').value.trim();
-  sendFull(order);
+  withLoader(() => sendFull(order));
 }
 function submitCustom(){
   const n=$('c_name').value.trim();
   if(!n){ $('c_err').style.display='block'; return; }
-  sendFull({t:'custom', name:n, link:$('c_link').value.trim(), login:$('c_login').value.trim()});
+  withLoader(() => sendFull({t:'custom', name:n, link:$('c_link').value.trim(), login:$('c_login').value.trim()}));
+}
+/* ---------- экран загрузки ---------- */
+const LOADER_STEPS = ['Проверяем данные', 'Формируем заявку', 'Готовим счёт к оплате'];
+function withLoader(done){
+  const ov = $('loader'), st = $('ldSteps');
+  st.innerHTML = LOADER_STEPS.map((s,i)=>`<li id="ls${i}"><i></i>${s}</li>`).join('');
+  ov.classList.add('on');
+  if (tg?.MainButton) tg.MainButton.hide();
+  LOADER_STEPS.forEach((_,i)=> setTimeout(()=>{
+    if (i>0) $('ls'+(i-1)).className='ok';
+    $('ls'+i).className='act';
+  }, i*550));
+  setTimeout(()=>{
+    $('ls'+(LOADER_STEPS.length-1)).className='ok';
+    $('ldTitle').textContent = 'Заявка создана';
+    $('ldSub').textContent = 'Счёт и статус заказа — в чате с ботом';
+    setTimeout(done, 600);
+  }, LOADER_STEPS.length*550);
 }
 function sendFull(order){
   if (MODE === 'keyboard'){ tg.sendData(JSON.stringify(order)); return; }
+  $('loader').classList.remove('on');
   openSheet(`<div class="done"><div class="em">📝</div><h3>Заявка сформирована</h3>
-    <p style="color:var(--muted);margin:8px 0 14px">Откройте каталог из бота @${BOT_USERNAME}, чтобы отправить заявку оператору.</p>
+    <p style="color:var(--muted);margin:8px 0 14px">Откройте каталог из бота @${BOT_USERNAME}, чтобы отправить заявку.</p>
     <button class="btn" onclick="toBot('start')">Перейти в бот</button></div>`);
 }
 
