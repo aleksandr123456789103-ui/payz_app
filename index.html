@@ -327,7 +327,6 @@ function openProduct(id){
   bindPrice(p,'s_');
 }
 function openCustom(){
-  if (!ASK_LOGIN){ return toBot('custom'); }
   openSheet(`<div class="sheet-h"><div class="ico" style="background:var(--brand)">+</div><div><h3>Другой сервис</h3><p>Оформим вручную</p></div></div>
     <div class="field"><label>Название сервиса и тариф</label><input id="c_name" placeholder="Например: Netflix Standard, 1 месяц"></div>
     <div class="field"><label>Ссылка на сервис (если есть)</label><input id="c_link"></div>
@@ -363,8 +362,8 @@ function submitOrder(id, prefix){
   }
   if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
 
-  if (MODE === 'inline'){
-    // короткий код выбора для /start (до 64 символов): o-<id>-<номинал>-<регион> или o-<id>-a<сумма>-<валюта>
+  if (MODE !== 'keyboard'){
+    // заявка уходит боту ссылкой /start (до 64 символов) выбора для /start (до 64 символов): o-<id>-<номинал>-<регион> или o-<id>-a<сумма>-<валюта>
     let code;
     if (p.mode==='amount'){
       const amt = Math.max(1, Math.round(parseFloat($(prefix+'amount').value)||0));
@@ -412,10 +411,9 @@ function withLoader(done){
 }
 function sendFull(order){
   if (MODE === 'keyboard'){ tg.sendData(JSON.stringify(order)); return; }
-  $('loader').classList.remove('on');
-  openSheet(`<div class="done"><div class="em">📝</div><h3>Заявка сформирована</h3>
-    <p style="color:var(--muted);margin:8px 0 14px">Откройте каталог из бота @${BOT_USERNAME}, чтобы отправить заявку.</p>
-    <button class="btn" onclick="toBot('start')">Перейти в бот</button></div>`);
+  // открыто не из reply-кнопки: «другой сервис» передаём ссылкой
+  const c = 'c-' + b64u((order.name||'') + ' | ' + (order.login||''));
+  toBot(c.length <= 64 ? c : 'custom');
 }
 
 /* ---------- старт ---------- */
