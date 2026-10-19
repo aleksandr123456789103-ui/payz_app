@@ -62,6 +62,7 @@ header{position:sticky;top:0;z-index:20;background:rgba(244,245,251,.92);backdro
 
 /* catalog */
 section{padding:8px 16px 20px}
+#catalog{scroll-margin-top:110px}
 h2{font-size:20px;text-align:center;margin:8px 0 14px}
 .chips{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
@@ -136,11 +137,19 @@ footer a{display:block;color:var(--text);text-decoration:none;padding:5px 0;curs
   </div>
   <div class="banner" style="background:linear-gradient(135deg,#e2552b,#ff8a3d)">
     <div><h3>ИИ-сервисы</h3><p>ChatGPT, Claude, Perplexity и другие — оформим подписку</p></div>
-    <button onclick="setCat('ai');document.getElementById('catalog').scrollIntoView({behavior:'smooth'})">Выбрать</button>
+    <button onclick="goCat('ai')">Выбрать</button>
   </div>
   <div class="banner" style="background:linear-gradient(135deg,#1d2a6b,#4153c4)">
     <div><h3>Игры и донат</h3><p>Steam, PlayStation, PUBG Mobile и предзаказы новинок</p></div>
-    <button onclick="setCat('games');document.getElementById('catalog').scrollIntoView({behavior:'smooth'})">Смотреть</button>
+    <button onclick="goCat('games')">Смотреть</button>
+  </div>
+  <div class="banner" style="background:linear-gradient(135deg,#0d7bd8,#33b6ff)">
+    <div><h3>eSIM для путешествий</h3><p>Мобильный интернет за границей без роуминга — QR-код на почту</p></div>
+    <button onclick="goCat('esim')">Выбрать страну</button>
+  </div>
+  <div class="banner" style="background:linear-gradient(135deg,#14152b,#3b3d5c)">
+    <div><h3>Зарубежная карта в $</h3><p>Виртуальная карта для оплаты сервисов за рубежом</p></div>
+    <button onclick="goCat('card')">Оформить</button>
   </div>
 </div>
 
@@ -188,53 +197,22 @@ footer a{display:block;color:var(--text);text-decoration:none;padding:5px 0;curs
 <script>
 /* ==================== НАСТРОЙКИ ==================== */
 const BOT_USERNAME = 'payz_pay_bot';
-const TOPUP_FEE = 0.054;            // комиссия на пополнение по сумме (5,4%)
-// Цены ниже — ОРИЕНТИРОВОЧНЫЕ, замените на свои. Итог всё равно подтверждает оператор.
-const CATS = [
-  {id:'all',   name:'Все товары'},
-  {id:'ai',    name:'🤖 ИИ-сервисы'},
-  {id:'games', name:'🎮 Игры'},
-  {id:'subs',  name:'🎧 Подписки'},
-];
-const PRODUCTS = [
-  {id:'steam', name:'Steam', cat:'games', bg:'#1b2838', ic:'S', mode:'amount',
-   currencies:['RUB','USD','KZT'], login:'Логин Steam', loginHint:'Логин, а не ник в профиле'},
-  {id:'psn', name:'PlayStation', cat:'games', bg:'#0b3fa8', ic:'PS', mode:'nominal',
-   nominals:{'$10':1150,'$20':2250,'$50':5500,'$100':10900}, regions:['США','Турция','Польша'], login:'E-mail для получения кода', type:'email'},
-  {id:'chatgpt', name:'ChatGPT', cat:'ai', bg:'#101010', ic:'AI', mode:'nominal',
-   nominals:{'Plus — 1 месяц':2500,'Pro — 1 месяц':22900}, regions:['США'], login:'E-mail аккаунта', type:'email', promo:true},
-  {id:'appleid', name:'Apple ID', cat:'subs', bg:'#1d8cf8', ic:'A', mode:'nominal',
-   nominals:{'$10':1150,'$25':2850,'$50':5600,'$100':11100}, regions:['США','Турция'], login:'E-mail для получения кода', type:'email'},
-  {id:'appleid_ru', name:'Apple ID RU', cat:'subs', bg:'#3a7bd5', ic:'A₽', mode:'amount',
-   currencies:['RUB'], login:'Apple ID (e-mail)', type:'email'},
-  {id:'pubg', name:'PUBG Mobile', cat:'games', bg:'#c58b2a', ic:'UC', mode:'nominal',
-   nominals:{'60 UC':120,'325 UC':550,'660 UC':1090,'1800 UC':2790}, login:'Player ID'},
-  {id:'gta6', name:'GTA VI · предзаказ', cat:'games', bg:'#b0307a', ic:'VI', mode:'nominal',
-   nominals:{'Standard':7500,'Deluxe':9900}, regions:['США','Турция'], login:'E-mail аккаунта', type:'email'},
-  {id:'fc', name:'EA SPORTS FC', cat:'games', bg:'#0f6b3b', ic:'FC', mode:'nominal',
-   nominals:{'Standard':6500,'Ultimate':9500,'FC Points 2800':2600}, login:'E-mail аккаунта EA', type:'email'},
-  {id:'tgprem', name:'Telegram Premium', cat:'subs', bg:'#2aa3e0', ic:'✈', mode:'nominal',
-   nominals:{'3 месяца':1290,'6 месяцев':1890,'12 месяцев':3290}, login:'@username получателя'},
-  {id:'claude', name:'Claude', cat:'ai', bg:'#d4744f', ic:'✳', mode:'nominal',
-   nominals:{'Pro — 1 месяц':2500,'Max — 1 месяц':12500}, login:'E-mail аккаунта', type:'email', promo:true},
-  {id:'higgsfield', name:'Higgsfield AI', cat:'ai', bg:'#b6e01c', ic:'H', mode:'nominal',
-   nominals:{'Basic — 1 месяц':1100,'Pro — 1 месяц':3300}, login:'E-mail аккаунта', type:'email'},
-  {id:'perplexity', name:'Perplexity', cat:'ai', bg:'#1e2a2b', ic:'P', mode:'nominal',
-   nominals:{'Pro — 1 месяц':2300,'Pro — 12 месяцев':21000}, login:'E-mail аккаунта', type:'email'},
-  {id:'spotify', name:'Spotify', cat:'subs', bg:'#1db954', ic:'♫', mode:'nominal',
-   nominals:{'Premium — 1 месяц':690,'Premium — 12 месяцев':6900}, login:'E-mail аккаунта', type:'email'},
-  {id:'youtube', name:'YouTube Premium', cat:'subs', bg:'#e62117', ic:'▶', mode:'nominal',
-   nominals:{'1 месяц':690,'12 месяцев':6500}, login:'E-mail аккаунта Google', type:'email'},
-];
-const QUICK = ['steam','psn','chatgpt','appleid'];
-const RATES = {RUB:1, USD:98, KZT:0.2};   // для пересчёта суммы пополнения в рубли
+// Каталог, цены и категории — в файле catalog.json рядом с этой страницей
 /* =================================================== */
 
 const tg = window.Telegram?.WebApp;
 if (tg){ tg.ready(); tg.expand(); }
 const $ = id => document.getElementById(id);
-const byId = id => PRODUCTS.find(p=>p.id===id);
-let cat = 'all', quickId = 'steam';
+let C = null;                       // каталог
+const byId = id => C.products.find(p=>p.id===id);
+let cat = 'all', quickId = null;
+
+// Как открыт мини-апп:
+//  keyboard — из reply-кнопки «Каталог» → заявку можно отправить через sendData целиком;
+//  inline   — из кнопки под сообщением → передаём выбор через ссылку /start, логин бот спросит в чате;
+//  browser  — просто в браузере.
+const MODE = !tg || !tg.initData ? 'browser' : (tg.initDataUnsafe && tg.initDataUnsafe.query_id ? 'inline' : 'keyboard');
+const ASK_LOGIN = MODE !== 'inline';
 
 function tile(p, cls=''){ return `<div class="ico ${cls}" style="background:${p.bg}">${p.ic}</div>`; }
 const fmt = n => Math.round(n).toLocaleString('ru-RU') + ' ₽';
@@ -243,18 +221,21 @@ function formHTML(p, prefix){
   let h = '';
   if (p.mode==='amount'){
     h += `<div class="row">
-      <div class="field"><label>Сумма пополнения</label><input id="${prefix}amount" type="number" inputmode="decimal" value="500" min="1"></div>
+      <div class="field"><label>Сумма пополнения</label><input id="${prefix}amount" type="number" inputmode="decimal" value="${p.currencies[0]==='USD'?50:500}" min="1"></div>
       <div class="field sel"><label>Валюта</label><select id="${prefix}cur">${p.currencies.map(c=>`<option>${c}</option>`).join('')}</select></div>
     </div>`;
   } else {
-    h += `<div class="field sel"><label>Номинал</label><select id="${prefix}nom">${Object.keys(p.nominals).map(n=>`<option>${n}</option>`).join('')}</select></div>`;
+    h += `<div class="field sel"><label>${p.cat==='esim'?'Тариф':'Номинал'}</label><select id="${prefix}nom">${Object.keys(p.nominals).map(n=>`<option>${n}</option>`).join('')}</select></div>`;
     if (p.regions) h += `<div class="field sel"><label>Регион аккаунта</label><select id="${prefix}reg">${p.regions.map(r=>`<option>${r}</option>`).join('')}</select></div>`;
   }
-  h += `<div class="field"><label>${p.login}${p.loginHint?' · '+p.loginHint:''}</label><input id="${prefix}login" type="${p.type||'text'}" autocomplete="off"></div>
-        <div class="err" id="${prefix}err">Заполните это поле</div>`;
-  if (p.promo) h += `<div class="field"><label>Промокод</label><input id="${prefix}promo" autocomplete="off"></div>`;
-  h += `<button class="btn" id="${prefix}btn" onclick="submitOrder('${p.id}','${prefix}')"></button>
-        <label class="check"><input type="checkbox" id="${prefix}news" checked>Хочу получать скидки и промокоды</label>
+  if (ASK_LOGIN){
+    h += `<div class="field"><label>${p.login}${p.loginHint?' · '+p.loginHint:''}</label><input id="${prefix}login" type="${p.type||'text'}" autocomplete="off"></div>
+          <div class="err" id="${prefix}err">Заполните это поле</div>`;
+    if (p.promo) h += `<div class="field"><label>Промокод</label><input id="${prefix}promo" autocomplete="off"></div>`;
+  }
+  h += `<button class="btn" id="${prefix}btn" onclick="submitOrder('${p.id}','${prefix}')"></button>`;
+  if (!ASK_LOGIN) h += `<p class="note">${p.login} бот спросит в чате следующим шагом.</p>`;
+  h += `<label class="check"><input type="checkbox" id="${prefix}news" checked>Хочу получать скидки и промокоды</label>
         <p class="note">Нажимая кнопку, вы соглашаетесь с <a onclick="doc('Политика конфиденциальности')" style="color:inherit;text-decoration:underline">политикой конфиденциальности</a>. Итоговую стоимость подтверждает оператор.</p>`;
   return h;
 }
@@ -262,7 +243,7 @@ function formHTML(p, prefix){
 function calc(p, prefix){
   if (p.mode==='amount'){
     const a = parseFloat($(prefix+'amount').value)||0, cur = $(prefix+'cur').value;
-    return a * RATES[cur] * (1+TOPUP_FEE);
+    return a * (C.rates[cur]||1) * (1+C.topup_fee);
   }
   return p.nominals[$(prefix+'nom').value];
 }
@@ -277,7 +258,7 @@ function bindPrice(p, prefix){
 }
 
 function renderQuick(){
-  $('qtabs').innerHTML = QUICK.map(id=>{ const p=byId(id);
+  $('qtabs').innerHTML = C.quick.map(id=>{ const p=byId(id);
     return `<button class="qtab ${id===quickId?'active':''}" onclick="quickId='${id}';renderQuick()">${tile(p)}${p.name}</button>`;}).join('');
   const p = byId(quickId);
   $('qform').innerHTML = formHTML(p,'q_');
@@ -285,18 +266,20 @@ function renderQuick(){
 }
 
 function setCat(c){ cat=c; renderChips(); renderGrid(); }
+function goCat(c){ closeSheet(); setCat(c); $('catalog').scrollIntoView({behavior:'smooth'}); }
 function renderChips(){
-  $('chips').innerHTML = CATS.map(c=>`<button class="chip ${c.id===cat?'active':''}" onclick="setCat('${c.id}')">${c.name}</button>`).join('');
+  $('chips').innerHTML = C.cats.map(c=>`<button class="chip ${c.id===cat?'active':''}" onclick="setCat('${c.id}')">${c.name}</button>`).join('');
+  const a = $('chips').querySelector('.active'); if (a) a.scrollIntoView({inline:'center',block:'nearest'});
 }
 function renderGrid(){
   const q = $('q').value.trim().toLowerCase();
-  const list = PRODUCTS.filter(p => (cat==='all'||p.cat===cat) && (!q || p.name.toLowerCase().includes(q)));
+  const list = C.products.filter(p => (cat==='all'||p.cat===cat) && (!q || p.name.toLowerCase().includes(q)));
   if (q && cat!=='all' && !list.length){ cat='all'; renderChips(); return renderGrid(); }
   $('grid').innerHTML = list.length ? list.map(p=>{
       const from = p.mode==='nominal' ? 'от '+fmt(Math.min(...Object.values(p.nominals))) : 'любая сумма';
       return `<button class="card" onclick="openProduct('${p.id}')">${tile(p)}<span>${p.name}</span><small>${from}</small></button>`;
     }).join('') : `<div class="empty">Ничего не нашли — <a style="color:var(--brand)" onclick="openCustom()">оформим вручную</a></div>`;
-  if (q) document.getElementById('catalog').scrollIntoView({behavior:'smooth'});
+  if (q) $('catalog').scrollIntoView({behavior:'smooth'});
 }
 
 /* ---------- sheet ---------- */
@@ -313,10 +296,11 @@ function closeSheet(){
 }
 function openProduct(id){
   const p = byId(id);
-  openSheet(`<div class="sheet-h">${tile(p)}<div><h3>${p.name}</h3><p>${CATS.find(c=>c.id===p.cat).name}</p></div></div>${formHTML(p,'s_')}`);
+  openSheet(`<div class="sheet-h">${tile(p)}<div><h3>${p.name}</h3><p>${C.cats.find(c=>c.id===p.cat).name}</p></div></div>${formHTML(p,'s_')}`);
   bindPrice(p,'s_');
 }
 function openCustom(){
+  if (!ASK_LOGIN){ return toBot('custom'); }
   openSheet(`<div class="sheet-h"><div class="ico" style="background:var(--brand)">+</div><div><h3>Другой сервис</h3><p>Оформим вручную</p></div></div>
     <div class="field"><label>Название сервиса и тариф</label><input id="c_name" placeholder="Например: Netflix Standard, 1 месяц"></div>
     <div class="field"><label>Ссылка на сервис (если есть)</label><input id="c_link"></div>
@@ -326,7 +310,7 @@ function openCustom(){
 }
 function openMenu(){
   openSheet(`<div class="menu">
-    <a onclick="closeSheet();setCat('all');$('catalog').scrollIntoView({behavior:'smooth'})">🛍 Каталог</a>
+    ${C.cats.filter(c=>c.id!=='all').map(c=>`<a onclick="goCat('${c.id}')">${c.name}</a>`).join('')}
     <a onclick="openCustom()">➕ Оформить другой сервис</a>
     <a onclick="support()">💬 Поддержка</a>
     <a onclick="doc('Условия оплаты')">📄 Условия оплаты</a></div>`);
@@ -334,44 +318,69 @@ function openMenu(){
 function doc(name){
   openSheet(`<h3 style="margin-bottom:8px">${name}</h3><p style="color:var(--muted)">Документ готовится. По вопросам — напишите в поддержку.</p>`);
 }
-function support(){
-  const url = `https://t.me/${BOT_USERNAME}?start=support`;
-  if (tg?.openTelegramLink) { tg.openTelegramLink(url); tg.close(); } else window.open(url,'_blank');
+function toBot(param){
+  const url = `https://t.me/${BOT_USERNAME}?start=${param}`;
+  if (tg?.openTelegramLink && tg.initData) { tg.openTelegramLink(url); setTimeout(()=>tg.close(), 300); }
+  else window.open(url,'_blank');
 }
+function support(){ toBot('support'); }
 
 /* ---------- отправка заявки ---------- */
-function send(order){
-  const data = JSON.stringify(order);
-  if (tg && tg.initData !== undefined && tg.sendData){
-    try { tg.sendData(data); return; } catch(e){ /* открыт не из reply-кнопки */ }
-  }
-  openSheet(`<div class="done"><div class="em">📝</div><h3>Заявка сформирована</h3>
-    <p style="color:var(--muted);margin:8px 0 14px">Откройте каталог кнопкой «🛍 Каталог PAY Z» внизу чата с ботом, чтобы заявка отправилась автоматически.</p>
-    <button class="btn" onclick="support()">Перейти в бот</button></div>`);
-}
 function submitOrder(id, prefix){
-  const p = byId(id), login = $(prefix+'login');
-  if (!login.value.trim()){ $(prefix+'err').style.display='block'; login.focus(); return; }
-  $(prefix+'err').style.display='none';
-  const order = {t:'order', id:p.id, name:p.name, login:login.value.trim(),
+  const p = byId(id);
+  if (ASK_LOGIN){
+    const login = $(prefix+'login');
+    if (!login.value.trim()){ $(prefix+'err').style.display='block'; login.focus(); return; }
+    $(prefix+'err').style.display='none';
+  }
+  if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+
+  if (MODE === 'inline'){
+    // короткий код выбора для /start (до 64 символов): o-<id>-<номинал>-<регион> или o-<id>-a<сумма>-<валюта>
+    let code;
+    if (p.mode==='amount'){
+      const amt = Math.max(1, Math.round(parseFloat($(prefix+'amount').value)||0));
+      code = `o-${p.id}-a${amt}-${p.currencies.indexOf($(prefix+'cur').value)}`;
+    } else {
+      const n = Object.keys(p.nominals).indexOf($(prefix+'nom').value);
+      const r = p.regions ? p.regions.indexOf($(prefix+'reg').value) : 0;
+      code = `o-${p.id}-${n}-${r}`;
+    }
+    return toBot(code);
+  }
+
+  const order = {t:'order', id:p.id, name:p.name, login:$(prefix+'login').value.trim(),
                  price:Math.round(calc(p,prefix)), news:$(prefix+'news').checked};
   if (p.mode==='amount'){ order.amount=$(prefix+'amount').value; order.cur=$(prefix+'cur').value; }
   else { order.nominal=$(prefix+'nom').value; if (p.regions) order.region=$(prefix+'reg').value; }
   if ($(prefix+'promo')) order.promo=$(prefix+'promo').value.trim();
-  if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-  send(order);
+  sendFull(order);
 }
 function submitCustom(){
   const n=$('c_name').value.trim();
   if(!n){ $('c_err').style.display='block'; return; }
-  send({t:'custom', name:n, link:$('c_link').value.trim(), login:$('c_login').value.trim()});
+  sendFull({t:'custom', name:n, link:$('c_link').value.trim(), login:$('c_login').value.trim()});
+}
+function sendFull(order){
+  if (MODE === 'keyboard'){ tg.sendData(JSON.stringify(order)); return; }
+  openSheet(`<div class="done"><div class="em">📝</div><h3>Заявка сформирована</h3>
+    <p style="color:var(--muted);margin:8px 0 14px">Откройте каталог из бота @${BOT_USERNAME}, чтобы отправить заявку оператору.</p>
+    <button class="btn" onclick="toBot('start')">Перейти в бот</button></div>`);
 }
 
-/* стартовый раздел из ссылки: ...index.html#chatgpt */
-renderQuick(); renderChips(); renderGrid();
-const start = (tg?.initDataUnsafe?.start_param) || location.hash.slice(1);
-if (start && byId(start)) openProduct(start);
-else if (['ai','games','subs'].includes(start)) { setCat(start); $('catalog').scrollIntoView(); }
+/* ---------- старт ---------- */
+// Раздел из ссылки: index.html?tab=games | esim | card | ai | subs | <id товара>
+const TAB_ALIASES = {services:'all'};
+fetch('catalog.json', {cache:'no-cache'}).then(r=>r.json()).then(data=>{
+  C = data; quickId = C.quick[0];
+  renderQuick(); renderChips(); renderGrid();
+  let tab = new URLSearchParams(location.search).get('tab') || tg?.initDataUnsafe?.start_param || '';
+  tab = TAB_ALIASES[tab] || tab;
+  if (tab && C.products.some(p=>p.id===tab)) openProduct(tab);
+  else if (tab && C.cats.some(c=>c.id===tab)) { setCat(tab); setTimeout(()=>$('catalog').scrollIntoView(), 50); }
+}).catch(()=>{
+  document.querySelector('.hero').insertAdjacentHTML('afterend','<p style="padding:16px;color:#d93a3a">Не удалось загрузить каталог. Обновите страницу.</p>');
+});
 </script>
 </body>
 </html>
