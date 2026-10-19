@@ -239,7 +239,7 @@ let cat = 'all', quickId = null;
 //  inline   — из кнопки под сообщением → передаём выбор через ссылку /start, логин бот спросит в чате;
 //  browser  — просто в браузере.
 const MODE = !tg || !tg.initData ? 'browser' : (tg.initDataUnsafe && tg.initDataUnsafe.query_id ? 'inline' : 'keyboard');
-const ASK_LOGIN = MODE !== 'inline';
+const ASK_LOGIN = true;  // логин вводится в мини-аппе всегда
 
 function tile(p, cls=''){ return `<div class="ico ${cls}" style="background:${p.bg}">${p.ic}</div>`; }
 const fmt = n => Math.round(n).toLocaleString('ru-RU') + ' ₽';
@@ -345,6 +345,7 @@ function openMenu(){
 function doc(name){
   openSheet(`<h3 style="margin-bottom:8px">${name}</h3><p style="color:var(--muted)">Документ готовится. По вопросам — напишите в поддержку.</p>`);
 }
+function b64u(s){ return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
 function toBot(param){
   const url = `https://t.me/${BOT_USERNAME}?start=${param}`;
   if (tg?.openTelegramLink && tg.initData) { tg.openTelegramLink(url); setTimeout(()=>tg.close(), 300); }
@@ -373,6 +374,9 @@ function submitOrder(id, prefix){
       const r = p.regions ? p.regions.indexOf($(prefix+'reg').value) : 0;
       code = `o-${p.id}-${n}-${r}`;
     }
+    // логин передаём в ссылке (base64url), если влезает в лимит Telegram 64 символа
+    const full = code + '-' + b64u($(prefix+'login').value.trim());
+    if (full.length <= 64) code = full;
     return withLoader(() => toBot(code));
   }
 
